@@ -1,0 +1,363 @@
+---
+layout:     post
+title:      "Evolving Boids"
+subtitle:   "An experiment in natural selection and flocking behavior."
+date:       2015-01-14 12:00:00
+author:     "Rupert Deese"
+header-img: "img/boids/flockingbirds.jpg"
+---
+<!-- Copyright Rupert Deese 2015 -->
+<!-- Licensed under GNU GPL http://www.gnu.org/licenses/gpl.txt --> 
+
+<style>
+h5 {
+  text-align:center;
+  margin:0;
+  border:0;
+  padding:0;
+  font-size:12px;
+  color:#666;
+}
+
+#boidWithRangeDiv {
+  position:relative;
+  width:301px;
+  height:110px;
+  margin: 0 auto;
+}
+
+#boidsim {
+  width:750px;
+  height:950px;
+  margin: 0 auto;
+  margin-top:20px;
+  margin-bottom:20px;
+}
+
+#boidcharts {
+  position:relative;
+  width:750px;
+  height:400px;
+  margin-top:20px;
+  margin-bottom:20px;
+}
+
+#genomeChartDiv {
+  position:absolute;
+  left:0;
+  top:0;
+}
+
+#fitnessChartDiv {
+  position:absolute;
+  right:0;
+  top:0;
+}
+
+#allGenomesChartDiv {
+  position:absolute;
+  left:0;
+  bottom:0;
+}
+
+#allFitnessesChartDiv {
+  position:absolute;
+  right:0;
+  bottom:0;
+}
+
+#boidland {
+  position: relative;
+  width:750px;
+  height:550px;
+}
+
+</style>
+
+        <section>
+          <h3>Why are living things so complex?</h3>
+          <p>Living things exhibit many complex behaviors, on a spectrum ranging from behaviors that seem instinctual,
+              to those that seem intelligent. Scientific evidence suggests that these behaviors arise from Darwinian
+              evolution. Evolution refers to the change of a species of living thing (dogs, cats, elephants, elm trees,
+              yeast) over time. The mechanism for this change is <i>natural selection</i>.</p>
+        </section>
+        <section>
+          <h3>Natural Selection</h3>
+          <p>Living things on earth are complex products of their ancestors, their contemporaries, and their environments,
+              so it would be incorrect to ascribe the appearance or behavior of any living thing to any one mechanism. However,
+              biologists have identified that the development and maintenance of all living things on earth is controlled
+              by a molecule called DNA.
+          <p>The DNA of every organism consists of a unique sequence of base pairs, containing instructions that are read by the
+              organism's cells. This unique sequence of base pairs is called a <i>genome</i>. This genome encodes
+              a collection of <i>traits</i> which all together are called the organism's
+              <i>phenotype</i>. When living things reproduce, they pass their genotype on to their offspring. If the reproduction
+              is sexual, then the offspring's genotype is a blend of the two parents' genotypes.
+              The offspring genotype is also subject to <i>mutation</i>, which makes small,
+              random changes to it. Thus the offspring's genotype (and consequently phenotype) will be inherited from its parents.
+          </p>
+          <p>A living thing's phenotype largely determines the way it interacts with its environment, including whether it 
+              will live long enough to reproduce. We call an organism's ability to reproduce its <i>fitness</i>. Fitter organisms
+              will contribute more offspring to the population than others, making their genotypes more common in the population.
+              Since these genotypes produce phenotypes that were fitter in the first place, this tends to increase the fitness of
+              the population overall, as long as the environment doesn't change too much. This is the core of natural selection.
+        </section>
+        <section>
+        <h3>The Blind Watchmaker</h3>
+        <p>
+            Biologists all agree that natural selection created every variety of living thing that has existed.
+          This claim may seem unbelievable: there is so much diversity, complexity, absurdity, and beauty in the natural world! 
+          Natural selection seems as impossible as a blind watchmaker, assembling beautiful creatures that can grow hundreds of feet tall, live
+          at the bottom of the ocean, or communicate over hundreds of miles, all in the name of this boring concept of fitness.
+          Furthermore, nobody has been able to show that natural selection could have produced all the living things that we see.
+          In order to do that, we would need to know things about the environments, populations, and chance occurrences of the distant past
+          (billions of years ago!) that are impossible to know. 
+        </p>
+        <p>
+          Even so, natural selection doesn't have to be taken on faith. There are many different kinds of evidence that support it,
+          and a lot of people happy to explain them. But I think that the funnest way to learn about natural selection is to watch
+          it happen right in front of you.
+        </p>
+        </section>
+        <section>
+          <h3>Creating a Model for Natural Selection</h3>
+          <p>If natural selection really does work, then we should be able to watch it happen if we create the right conditions.
+              We'll need:
+          </p>
+          <ul>
+            <li>living things that can reproduce and pass traits on to their offspring</li>
+            <li>an environment that favors some traits over others</li>
+          </ul>
+          <h4>The Living Things</h4>
+          <p>
+            We'll call our living things "boids." (Like "birds," only in a thick New Jersey accent.) Our boids are little 
+            black dots, living in two dimensions. They are born, they move around their 2D world, and they die. The boids
+            have some physical limitations: they have a top speed and a top acceleration, and they can't stop moving. Most
+            importantly, the only things that they are aware of are the other boids near them.
+          </p>
+          <figure id=boidWithRangeDiv>
+            <canvas id=boidWithRange width=301 height=91>
+              No HTML5 Canvas support :(
+            </canvas>
+<span class="caption text-muted">A boid and its visible neighborhood.</span>
+          </figure>
+          <h4>Genotype and Phenotype</h4>
+          <p>
+            The phenotype of a boid is the way it moves, in response to its own movements and those of neighboring boids.
+            This phenotype is encoded into a genotype with five individual genes. Each gene is a decimal number. These
+            genes determine how the boid moves (changes its acceleration), in response to five different properties of
+            itself and its environment. The genes and the properties they control the response to are as follows:
+          </p>
+          <ol>
+            <li>the boid's acceleration</li>
+            <li>the boid's velocity</li>
+            <li>the difference between the boid's acceleration and its neighbors' accelerations</li>
+            <li>the difference between the boid's velocity and its neighbors' velocities</li>
+            <li>the difference between the boid's position and its neighbors' positions</li>
+          </ol>
+          <figure>
+            <img src="{{ site.basename }}/img/boids/boidgenome.png"/>
+<span class="caption text-muted">The boid genome.</span>
+          </figure>
+          <p>
+            Specifically, the boid decides its new acceleration at every moment using the following formula:
+          </p>
+          <figure>
+            <img src="{{ site.basename }}/img/boids/boideqn.png"/>
+<span class="caption text-muted">The boids' governing equation.</span>
+          </figure>
+          <h4>Reproduction</h4>
+          <p>
+            Boids reproduce sexually. (Let's not go into the details.) Every new boid inherits its genome from a combination
+            of two parents' genomes, using a mechanism called crossover. After the two parents are chosen, a crossover point
+            is chosen randomly. The new boid gets the genes to the left of the crossover point from one parent, and the genes to
+            the right of the crossover point from the other. For example, if the crossover point was between genes 2 and 3, the
+            new boid would get genes 1 and 2 from one parent, and genes 3, 4, and 5 from the other. After crossover, every gene
+            in the new genome is randomly mutated by a small amount.
+          </p>
+          <p>
+            To simplify reproduction in our little boid-world, a new boid is born whenever a boid dies. The parents of this new
+            boid are chosen randomly from the set of all boids that have at least one neighbor. The new boid is born into the
+            world at a random location.
+          </p>
+          <h4>The Environment</h4>  
+          <p>
+            Our environment is a tough place for a boid. If two boids collide with one another, both boids die. In addition,
+            boids without any neighbors are not safe: if a boid isn't near any other boids, it has a one-in-twelve chance of
+            dying at any moment.
+          </p>
+          <p>
+            Our environment has no boundaries: although we will see it as a 2D rectangle, the top edge wraps around
+            to the bottom edge, and the left edge to the right edge, making it a continuous space.
+          </p>
+        </section>
+        <section>
+          <h3>A Boid Experiment</h3>
+          <p>Now that our boids are fleshed out in our imaginations, let's bring them to life and see what happens!</p>
+          <h4>Hypothesis</h4>
+          <p>As far as we can tell, the boids and their environment have all the right conditions for natural selection.
+              So if we set loose some actual boids, we would hope to see natural selection take effect on the boid
+              population. What would be evidence of natural selection? We know that natural selection tends to increase
+              fitness in the population as long as the environment doesn't change, and our environment is constant. Also,
+              we know that if fitness is increasing, genotypes
+              similar to the fittest genotype must be becoming more common. If natural selection is happening, then:
+          </p>
+          <ul>
+            <li>the phenotype (visible movement) of the boids will change over time</li>
+            <li>the average fitness of the boid population will increase over time</li>
+            <li>the average genotype of the boid population will approach the most fit genotype, over time</li>
+          </ul>
+          <h4>Procedure</h4>
+          <p>
+            In order to check our hypotheses, we'll create a boid-world to observe.
+            The boid-world below initially contains 120 boids, all with the same null genome. This genome corresponds
+            to a phenotype of no response to anything. The world will exist for around 3 minutes, and then start over 
+            again. The graphs show information about the average genome and fitness of the boids.
+          </p>
+          <p>
+            The top two graphs contain information about the current boid-world above, as it runs. 
+            The graph on the upper left shows the value of each gene in the average 
+            boid genome. The graph on the upper right shows the average age of all boids currently living. The x-axis represents
+            time. Once the world starts over, the contents of the top two graphs is added to the graphs below them.
+            The bottom graphs show the final top graphs of every past boid-world. 
+          </p>
+          <p>
+            Watch the boids for a while, or just leave this page open in the background for 10 minutes or so, to gather
+            results from a few separate boid worlds.
+          </p>
+        </section>
+        <h5>The Boid-World</h5>
+        <div id="boidsim" width=750 height=950>
+          <canvas id="boidland" width="750" height="550">
+              This text is displayed if your browser does not support HTML5 Canvas.
+          </canvas>
+          <div id="boidcharts">
+            <div id="genomeChartDiv">
+              <h5>Current Genome</h5>
+              <canvas id="genomeChart" width="365" height="180">
+                  No canvas support :(
+              </canvas>
+            </div>
+            <div id="fitnessChartDiv">
+              <h5>Current Fitness</h5>
+              <canvas id="fitnessChart" width="365" height="180">
+                  No canvas support :(
+              </canvas>
+            </div>
+            <div id="allGenomesChartDiv">
+              <h5>All Genomes</h5>
+              <canvas id="allGenomesChart" width="365" height="180">
+                  No canvas support :(
+              </canvas>
+            </div>
+            <div id="allFitnessesChartDiv">
+              <h5>All Fitnesses</h5>
+              <canvas id="allFitnessesChart" width="365" height="180">
+                  No canvas support :(
+              </canvas>
+            </div>
+          </div>
+        </div>
+        <section>
+          <h3>Observations</h3>
+          <p>
+            If you've let our little experiment run for a while, you've probably noticed that:
+          </p>
+          <ul>
+            <li>The behavior of the boids, which looks random when a world begins, looks different
+                after a few minutes. More interestingly, the boids develop very similar behavior in every
+                successive world! Personally, their behavior reminds me of birds flocking.</li>
+            <li>In every world, the average age of living boids increases over time.</li>
+            <li>The average genome doesn't stay the same, and the final values of certain genes, especially genes
+                3 and 4, tend to be the same in every world.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Conclusions</h3>
+          <p>
+            Let's remind ourselves of our three hypotheses:
+          </p>
+          <ul>
+            <li>the phenotype (visible movement) of the boids will change over time</li>
+            <li>the average fitness of the boid population will increase over time</li>
+            <li>the average genotype of the boid population will approach the most fit genotype, over time</li>
+          </ul>
+          <p>
+            What does the boid experiment say about our hypotheses? The conclusions are yours to draw,
+            but I'll leave you with a few of my own thoughts.
+          </p>
+          <h4>Visible Behavior</h4>
+          <p>
+            Our first hypothesis involved observing the boids to see if their behavior changed over time.
+            "Changed" is a very qualitative measure, but some qualitative measures are very powerful and
+            intuitive for us humans. For example, you probably don't need a microscope to tell if something
+            is alive or not. You can just <i>tell</i> somehow. How would you describe the boids' behavior,
+            at the beginning of each world and at the end?
+          </p>
+          <h4>Measuring Fitness</h4>
+          <p>
+            In the boid-world, boid parents are chosen randomly amongst living boids. Therefore,
+            The only way for a boid to increase its number of offspring is to stay alive for as
+            long as possible, to increase the number of times it is chosen! So, the average age
+            of living boids might be a good measure of the boids' average fitness.
+          </p>
+          <h4>The Fittest Boid Genotype</h4>
+          <p>
+            I don't know of a way to figure out what the fittest boid genotype is, even though
+            I might have some intuition about it. What do you think? Even if we don't know what
+            the fittest genotype is, if different boid worlds seem to be heading to the same
+            genotype, and the average fitness in all of those worlds is increasing, what can
+            we conclude?
+          </p>
+          <h4>Repeatability</h4>
+          <p>
+            There is a lot of randomness in the boid-world: random starting configuration, random
+            selection of parents, crossover, and mutation. Is it surprising that the boid-world
+            consistently develops in the same way? If the development of many separate boid worlds
+            is the same, does that give us more confidence that our observations are valid?
+          </p>
+        </section>
+        <section>
+          <h3>If it walks like a duck...</h3>
+          <p>
+            We've taken a small journey exploring the idea of natural selection, and how it might
+            relate to living things on earth. I hope you've enjoyed it--I certainly did. If the way
+            the boids behaved seems at all lifelike to you, I think it's interesting to ask the question:
+          </p>
+          <blockquote>
+            <i>"What does it mean for something to be alive?"</i>
+          </blockquote>
+          <p>
+            If natural selection is at work amongst the living things on this planet,
+            and you saw natural selection work on the boids, what is the difference between boids and
+            the things that we usually call "living?" Certainly DNA-based life is more complex, but
+            is that what matters? The boids changed over time to become more fit in their environment,
+            and complex behavior emerged from chaotic behavior. Might that be what life is about?
+          </p>
+          <p>
+            As the saying goes, "if it walks like a duck, swims like a duck, and quacks like a duck,
+            call it a duck."
+          </p>  
+        </section>
+        <section>
+        <h3>Further Investigation</h3>
+        <ul>
+          <li> <a href="https://github.com/rdeese/EvolvingBoids">This project</a> is entirely on GitHub.
+              Suggestions, questions, comments, and contributions are welcome.</li>
+          <li>Craig Reynold's <a href="http://www.cs.toronto.edu/~dt/siggraph97-course/cwr87/">original
+              paper</a> on programing flocking behavior</li>
+          <li>Harry Brundage's <a href="http://harry.me/blog/2011/02/17/neat-algorithms-flocking/">blog
+              post</a> on pre-programmed flocking behavior.</li>
+          <li><a href="http://www.amazon.com/Artificial-Life-Frontier-Computers-Biology/dp/0679743898">Artficial
+              Life</a> by Steven Levy, an excellent book which sparked my interest this area to begin with.</li>
+          <li><a href="http://www.amazon.com/Probably-Approximately-Correct-Algorithms-Prospering/dp/0465032710">
+              Probably Approximately Correct</a>, a recent book about our modern mathematical and computational
+              understanding of learning and evolution, written by Leslie Valiant, who somewhat invented the field.</li>
+          <li>Richard Dawkins' <a href="http://www.amazon.com/The-Ancestors-Tale-Pilgrimage-Evolution/dp/061861916X">The
+              Ancestor's Tale</a>, the authoritative story from the natural selection perspective of evolution.</li>
+          <li>Of course, you don't have to buy the books! Online, <a href="http://en.wikipedia.org/wiki/Natural_selection">
+              natural selection</a> and <a href="http://en.wikipedia.org/wiki/Artificial_life">artificial life</a> are
+              good places to start.</li>
+        <ul>
+        </section>
+        <script type='text/javascript' src='{{ site.basename }}/js/boids/chart.js'></script>
+        <script type='text/javascript' src='{{ site.basename }}/js/boids/boids.js'></script>
