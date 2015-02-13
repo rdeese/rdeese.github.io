@@ -1,0 +1,87 @@
+---
+layout:     codepost
+category:   Code
+title:      "275 Sunsets"
+subtitle:   "Art by democracy in the smartphone era."
+date:       2015-02-13 12:00:00
+author:     "Rupert Deese"
+header-img: "img/sunsets/composite-275-1-255.jpg"
+---
+
+<h3>"A Sunset a Day"</h3>
+<p>That was the promise of a mailing list created, perhaps jokingly, by a college friend of mine. The list, sunset-l, is a chatlist where members of the West Dorm community at Harvey Mudd post self-taken pictures of sunsets. Sunset-l is surprisinly active, have received 684 emails in its less than three years of life. What's more, many sunset images are sent out, and nearly all of them are self-taken.
+</p>
+<p>
+The continued use of sunset-l is evidence that the act of both taking and sharing pictures of a day's sunset provides some kind of value to the people who participate. What kind of value? Comfort? Amusement? Information? I read and submit to the list, so this is a question as much about myself as it is about my friends and community.
+</p>
+<br>
+<figure>
+<div style='position: relative; padding-bottom: 101%; height: 0; overflow: hidden;'><iframe id='iframe' src='http://rupertdeese.com/flickrit/slideshowholder.php?full=1&height=100&size=big&speed=stop&setId=72157650799001385&counter=true&thumbnails=0&transition=0&layoutType=responsive&sort=0' scrolling='no' frameborder='0'style='width:100%; height:100%; position: absolute; top:0; left:0;' ></iframe></div>
+<span class="caption text-muted">Some representative sunsets from the list.</span>
+</figure>
+<h3>Submissions</h3>
+<p>
+For context, the images above are representative of the average sunset-l submission. Looking amongst them, one of two things must be true:
+</p>
+<ul>
+  <li>My peers are, on average, very bad at photography</li>
+  <li>The aesthetic quality of the images is not important</li>
+</ul>
+<p>
+I think better of my peers than the first option, and it doesn't make sense that people would continue to participate in the celebration of mediocre photography for art's sake. My theory is that people post sunsets as a way of "checking in" with the community. Basically, that each photo is not saying "admire this sunset" so much as, "I was here, I saw it, I thought about it."
+</p>
+<h3>The Platonic Sunset</h3>
+<p>
+It's not surprising that the pictures being shared are of sunsets; sunsets are an iconic photography target. Yet we decided before that these pictures aren't being shared for their aesthetic value. When I thought harder about this, I got really curious about a question of composition: 
+</p>
+<blockquote>What do images communicating the semantics (meaning) of a sunset look like, as opposed to images communicating the aesthetics (beauty) of a sunset?</blockquote>
+<p>
+Last fall, I attended a talk by Jason Salavon, <a href="http://www.salavon.com/work/category/amalgamations/">who does a lot of interesting work with amalgamations of images</a>. Inspired by his approach to discovering composition by brute force, I decided to do the same with the images from sunset-l. I would combine them, discovering a "platonic sunset" according to the tastes and needs of sunset-l contributors.
+<h3>Approach</h3>
+<p>
+Going into this project, I expected that it would be a lot harder than it was. There were two main things I needed to accomplish: (1) finding all of the images from the mailing list, and (2) composing them into one blended image.
+</p>
+<p>The first task was accomplished by moving all of the sunset-l messages to a new Mailbox "On My Mac" (I use the default OSX Mail app), and then using the <code>find</code> utility to list all the filenames in a text file:</p>
+<pre>
+find Mailboxes/AllSunsets.mbox -name *.jpeg > sunset_locations.txt 
+find Mailboxes/AllSunsets.mbox -name *.jpg >> sunset_locations.txt 
+find Mailboxes/AllSunsets.mbox -name *.JPG >> sunset_locations.txt
+find Mailboxes/AllSunsets.mbox -name *.png >> sunset_locations.txt
+</pre>
+<p>Next, I used Pillow, the Python Imaging Library fork, to do the image blending. I created a new blank white image, and one by one pasted every sunset into the center of it, using an arbitrary opacity of 10. I saved both intermediate and final results of this process. All of the code is just 15 lines:
+</p>
+<pre>
+from PIL import <span style='color:#797997; '>Image</span>
+
+locs <span style='color:#808030; '>=</span> open<span style='color:#808030; '>(</span><span style='color:#800000; '>"</span><span style='color:#0000e6; '>sunset_locations.txt</span><span style='color:#800000; '>"</span><span style='color:#808030; '>)</span>
+
+composite <span style='color:#808030; '>=</span> <span style='color:#797997; '>Image</span><span style='color:#808030; '>.</span><span style='color:#800000; font-weight:bold; '>new</span><span style='color:#808030; '>(</span><span style='color:#0000e6; '>'RGBA'</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>(</span><span style='color:#008c00; '>3000</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3000</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>(</span><span style='color:#008c00; '>255</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>255</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>255</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>0</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span>
+com_size <span style='color:#808030; '>=</span> composite<span style='color:#808030; '>.</span>size
+
+counter <span style='color:#808030; '>=</span> <span style='color:#008c00; '>1</span>
+<span style='color:#800000; font-weight:bold; '>for</span> line <span style='color:#800000; font-weight:bold; '>in</span> locs<span style='color:#800080; '>:</span>
+    im <span style='color:#808030; '>=</span> <span style='color:#797997; '>Image</span><span style='color:#808030; '>.</span>open<span style='color:#808030; '>(</span>line<span style='color:#808030; '>[</span><span style='color:#800080; '>:</span><span style='color:#808030; '>-</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>)</span>
+    offset <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>composite<span style='color:#808030; '>.</span>size<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#808030; '>-</span>im<span style='color:#808030; '>.</span>size<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#808030; '>)</span><span style='color:#808030; '>/</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>,</span>
+              <span style='color:#808030; '>(</span>composite<span style='color:#808030; '>.</span>size<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>-</span>im<span style='color:#808030; '>.</span>size<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>)</span><span style='color:#808030; '>/</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span>
+    composite<span style='color:#808030; '>.</span>paste<span style='color:#808030; '>(</span>im<span style='color:#808030; '>,</span> box<span style='color:#808030; '>=</span>offset<span style='color:#808030; '>,</span>
+                    mask<span style='color:#808030; '>=</span><span style='color:#797997; '>Image</span><span style='color:#808030; '>.</span><span style='color:#800000; font-weight:bold; '>new</span><span style='color:#808030; '>(</span><span style='color:#0000e6; '>'RGBA'</span><span style='color:#808030; '>,</span> im<span style='color:#808030; '>.</span>size<span style='color:#808030; '>,</span> <span style='color:#808030; '>(</span><span style='color:#008c00; '>255</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>255</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>255</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>7</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span>
+    <span style='color:#800000; font-weight:bold; '>if</span> <span style='color:#808030; '>(</span>counter <span style='color:#808030; '>%</span> <span style='color:#008c00; '>20</span> <span style='color:#808030; '>==</span> <span style='color:#008c00; '>0</span><span style='color:#808030; '>)</span><span style='color:#800080; '>:</span>
+        composite<span style='color:#808030; '>.</span>save<span style='color:#808030; '>(</span><span style='color:#800000; '>"</span><span style='color:#0000e6; '>composite-</span><span style='color:#800000; '>"</span><span style='color:#808030; '>+</span>str<span style='color:#808030; '>(</span>counter<span style='color:#808030; '>)</span><span style='color:#808030; '>+</span><span style='color:#800000; '>"</span><span style='color:#0000e6; '>.jpg</span><span style='color:#800000; '>"</span><span style='color:#808030; '>)</span>
+    counter <span style='color:#808030; '>+=</span> <span style='color:#008c00; '>1</span>
+
+composite<span style='color:#808030; '>.</span>save<span style='color:#808030; '>(</span><span style='color:#800000; '>"</span><span style='color:#0000e6; '>composite-</span><span style='color:#800000; '>"</span><span style='color:#808030; '>+</span>str<span style='color:#808030; '>(</span>counter<span style='color:#808030; '>)</span><span style='color:#808030; '>+</span><span style='color:#800000; '>"</span><span style='color:#0000e6; '>.jpg</span><span style='color:#800000; '>"</span><span style='color:#808030; '>)</span>
+</pre>
+<p>Pillow is pretty fast; this code ran to completion on a few hundred images in just a couple of minutes, and I was able to view my new composite sunsets.</p>
+<br>
+<div style='position: relative; padding-bottom: 101%; height: 0; overflow: hidden;'><iframe id='iframe' src='http://rupertdeese.com/flickrit/slideshowholder.php?full=1&height=100&size=big&speed=stop&setId=72157650383869188&counter=true&thumbnails=0&transition=0&layoutType=responsive&sort=0' scrolling='no' frameborder='0'style='width:100%; height:100%; position: absolute; top:0; left:0;' ></iframe></div>
+<h3>Results</h3>
+<p>
+In my personal archive of the sunset-l emails, there were 275 sunsets. I generated composites after the addition of every 20 images, which were added no particular order (actually, they were ordered by filename and the whims of <code>find</code>, but <i>I</i> didn't order them intentionally). The above photoset contains all of the composites, in order of least images to most.
+</p>
+<p>
+First of all: aren't they beautiful? Or at least interesting? Certainly we see in them some wisdom from the crowd about how to visually communicate a sunset. Despite the differing sizes and orientations of the images, on average the sun gets put smack in the middle of the frame, vertically and horizontally. The lighter, bluer top half of the composites compared to their dark black bottom half tells us that people tend to set the exposure of the image to capture the sky, rather than what's in the foreground. Looking back to the sample sunset-l photos, you can see that these generalizations bear out.
+</p>
+<p>
+Because it's such an unexpected and quirky community, sunset-l has a special place in my heart. Looking through other people's eyes at a universally shared daily event is powerful, and it connects you to other people in a way. Beyond what the image composites can tell us about composition and the tendencies of this little community, I like them because they're another way to see the sunset.
+</p>
+
